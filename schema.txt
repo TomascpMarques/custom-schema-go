@@ -1,0 +1,58 @@
+tipo InfoComputador
+    ID string
+    Nome string
+    Sala string
+    Formato string
+    Ativo bool
+    Area string
+
+tipo ComponentesComputador
+    CPU []CPU
+    GPU []GPU
+    RAM []RAM
+    MBoard Mboard
+
+tipo Mboard
+    ID string
+    Nome string
+    RAMSlots int
+    MaxRAM int
+    SlotsExpanso string > int
+    Armazenamento string > int
+    Lan string
+    USBports string > int
+    PortasIO string > int
+    Formato string
+    Notas string
+
+tipo CPU 
+    ID string
+    Nome string
+    Nucleos int
+    Threads int
+    Frequencia string
+    MaxRAM int
+    TDP string
+    Socket string
+    Marca string
+
+tipo GPU
+    ID string
+    Nome string
+    VelocidadeMem string
+    VRAM int
+    Dimensoes string
+    HDIM int
+    VGA int
+    DisplayPort int
+
+tipo RAM
+    Nome string
+    Velocidade string
+    Memoria string
+    Tipo string
+
+tipo Computador 
+    ID string
+    Info InfoComputador
+    Caracteristicas ComponentesComputador

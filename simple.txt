@@ -1,0 +1,5 @@
+tipo Ram
+    Nome string
+    Velocidade string
+    Memoria string
+    Tipo string
