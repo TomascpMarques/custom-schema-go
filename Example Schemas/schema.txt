@@ -7,9 +7,9 @@ tipo InfoComputador
     Area string
 
 tipo ComponentesComputador
-    CPU []CPU
-    GPU []GPU
-    RAM []RAM
+    CPU lista CPU
+    GPU lista GPU
+    RAM lista RAM
     MBoard Mboard
 
 tipo Mboard
