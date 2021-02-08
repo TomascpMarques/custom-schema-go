@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"regexp"
-	"strings"
 
 	"github.com/tomascpmarques/custom-schema-go/datastructs"
 	"github.com/tomascpmarques/custom-schema-go/genhelperfuncs"
@@ -64,9 +63,8 @@ func main() {
 
 	for _, v := range lista {
 		if v.StructHeader["head"] == "tipo" {
-			line := "// " + v.StructHeader["body"] + " -" + "\ntype " + v.StructHeader["body"] + " struct {\n"
-			written, err := genhelperfuncs.WriteBuffer(line, ficheiroGO)
-			if err != nil || written < len(v.StructHeader["head"]) {
+			err := genhelperfuncs.ParseStructHeader(v, ficheiroGO)
+			if err != nil {
 				fmt.Println("Error: ", err)
 				return
 			}
@@ -77,28 +75,23 @@ func main() {
 		for _, v := range v.StructBody {
 			currentType := v["type"]
 			if len(regexp.MustCompile(`^lista\s+\w+$`).FindAllString(currentType, -1)) != 0 {
-				line := fmt.Sprintf("%s []%s\n", v["field"], currentType[6:])
-				written, err := genhelperfuncs.WriteBuffer(line, ficheiroGO)
-				if err != nil || written < len(line) {
+				err := genhelperfuncs.ParseStructBodyArray(v, currentType, ficheiroGO)
+				if err != nil {
 					fmt.Println("Error: ", err)
 					return
 				}
 				continue
 			}
 			if len(regexp.MustCompile(`^[A-z]+\s>\s[A-z]+$`).FindAllString(currentType, -1)) != 0 {
-				firstType := v["type"][:strings.Index(v["type"], " ")]
-				secondType := v["type"][strings.Index(v["type"], " ")+3:]
-				line := fmt.Sprintf("%s map[%s]%s\n", v["field"], firstType, secondType)
-				written, err := genhelperfuncs.WriteBuffer(line, ficheiroGO)
-				if err != nil || written < len(line) {
+				err := genhelperfuncs.ParseStructBodyMap(v, ficheiroGO)
+				if err != nil {
 					fmt.Println("Error: ", err)
 					return
 				}
 				continue
 			}
-			line := fmt.Sprintf("\t%s %s\n", v["field"], v["type"])
-			written, err := genhelperfuncs.WriteBuffer(line, ficheiroGO)
-			if err != nil || written < len(line) {
+			err := genhelperfuncs.ParseStructDefaultField(v, ficheiroGO)
+			if err != nil {
 				fmt.Println("Error: ", err)
 				return
 			}

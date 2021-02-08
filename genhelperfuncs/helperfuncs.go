@@ -77,3 +77,53 @@ func WriteBuffer(writeValue string, file *os.File) (written int, err error) {
 	}
 	return 0, err
 }
+
+// ParseStructHeader -
+func ParseStructHeader(v datastructs.Estrutura, file *os.File) error {
+	line := fmt.Sprintf("// %s - \ntype %s struct {\n", v.StructHeader["body"], v.StructHeader["body"])
+
+	written, err := WriteBuffer(line, file)
+	if err != nil || written < len(v.StructHeader["head"]) {
+		fmt.Println("Error: ", err)
+		return err
+	}
+	return nil
+}
+
+// ParseStructBodyArray -
+func ParseStructBodyArray(v map[string]string, currentType string, file *os.File) error {
+	line := fmt.Sprintf("%s []%s\n", v["field"], currentType[6:])
+
+	written, err := WriteBuffer(line, file)
+	if err != nil || written < len(line) {
+		fmt.Println("Error: ", err)
+		return err
+	}
+	return nil
+}
+
+// ParseStructBodyMap -
+func ParseStructBodyMap(v map[string]string, file *os.File) error {
+	firstType := v["type"][:strings.Index(v["type"], " ")]
+	secondType := v["type"][strings.Index(v["type"], " ")+3:]
+
+	line := fmt.Sprintf("%s map[%s]%s\n", v["field"], firstType, secondType)
+
+	written, err := WriteBuffer(line, file)
+	if err != nil || written < len(line) {
+		fmt.Println("Error: ", err)
+		return err
+	}
+	return nil
+}
+
+// ParseStructDefaultField -
+func ParseStructDefaultField(v map[string]string, file *os.File) error {
+	line := fmt.Sprintf("\t%s %s\n", v["field"], v["type"])
+	written, err := WriteBuffer(line, file)
+	if err != nil || written < len(line) {
+		fmt.Println("Error: ", err)
+		return err
+	}
+	return nil
+}
