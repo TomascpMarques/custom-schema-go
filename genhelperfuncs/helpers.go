@@ -70,11 +70,12 @@ func SetUpFilesAndDirs() (*os.File, error) {
 }
 
 // WriteBuffer -
-func WriteBuffer(writeValue string, file *os.File) (written int, err error) {
-	written, err = file.Write([]byte(writeValue))
+func WriteBuffer(writeValue string, file *os.File) (int, error) {
+	written, err := file.Write([]byte(writeValue))
 	if err == nil && written == len([]byte(writeValue)) {
 		return written, err
 	}
+	defer file.Close()
 	return 0, err
 }
 
