@@ -53,14 +53,16 @@ func MapearVetorEstruturas(fs *datastructs.FileStructs, linha string, counter *i
 	}
 }
 
-// SetUpFilesAndDirs -
+// SetUpFilesAndDirs Cria a dir e o ficheiro onde a schema traduzida para go estará
 func SetUpFilesAndDirs() (*os.File, error) {
-	//os.Chdir("..")
-	dirErr := os.MkdirAll("resolvedschema", os.FileMode(os.O_APPEND))
+	// Cria a dir onde o ficheiro final estará
+	// Permissões: Owner: rwx; Others: r-x
+	dirErr := os.MkdirAll("./resolvedschema", 0755)
 	if dirErr != nil {
 		fmt.Println(dirErr)
 		return nil, dirErr
 	}
+	// Cria o ficheiro com as structs
 	file, err := os.Create("resolvedschema/schema_structs.go")
 	if err != nil {
 		fmt.Println(err)
@@ -69,20 +71,26 @@ func SetUpFilesAndDirs() (*os.File, error) {
 	return file, nil
 }
 
-// WriteBuffer -
+// WriteBuffer Escreve no ficheiro defenido, o string passada, a string passada é esperada que seja já formatada
 func WriteBuffer(writeValue string, file *os.File) (int, error) {
+	// Escreve no ficheiro, devolve o nº de bytes escritos e um erro
 	written, err := file.Write([]byte(writeValue))
+	// Compára-se o erro e o número de bytes escritos é o esperado
 	if err == nil && written == len([]byte(writeValue)) {
 		return written, err
 	}
+	// Fecha o ficheiro, no fim de todas as operações,
+	// Também fecha o ficheiro em caso de erros
 	defer file.Close()
 	return 0, err
 }
 
-// ParseStructHeader -
+// ParseStructHeader Cria o header em Go de uma Estrutura passada nos parametros
 func ParseStructHeader(v datastructs.Estrutura, file *os.File) error {
+	// Header em Go da struct, conteúdo extraído do parametro v
 	line := fmt.Sprintf("// %s - \ntype %s struct {\n", v.StructHeader["body"], v.StructHeader["body"])
 
+	// Escreve no ficheiro o struct header
 	written, err := WriteBuffer(line, file)
 	if err != nil || written < len(v.StructHeader["head"]) {
 		fmt.Println("Error: ", err)
@@ -91,8 +99,9 @@ func ParseStructHeader(v datastructs.Estrutura, file *os.File) error {
 	return nil
 }
 
-// ParseStructBodyArray -
+// ParseStructBodyArray Através do body da struct extraido pelo programa cria um go array
 func ParseStructBodyArray(v map[string]string, currentType string, file *os.File) error {
+	//currentType[6:] -> salta os chars na schema, esses são "lista "
 	line := fmt.Sprintf("%s []%s\n", v["field"], currentType[6:])
 
 	written, err := WriteBuffer(line, file)
@@ -103,7 +112,7 @@ func ParseStructBodyArray(v map[string]string, currentType string, file *os.File
 	return nil
 }
 
-// ParseStructBodyMap -
+// ParseStructBodyMap Cria um Golang map com os dados fornecidos por v, o formato normalmente é - tipo > tipo -
 func ParseStructBodyMap(v map[string]string, file *os.File) error {
 	firstType := v["type"][:strings.Index(v["type"], " ")]
 	secondType := v["type"][strings.Index(v["type"], " ")+3:]
@@ -118,7 +127,7 @@ func ParseStructBodyMap(v map[string]string, file *os.File) error {
 	return nil
 }
 
-// ParseStructDefaultField -
+// ParseStructDefaultField Cria os campos das structs default, os que só são primitivos, ex:-> Nome string
 func ParseStructDefaultField(v map[string]string, file *os.File) error {
 	line := fmt.Sprintf("\t%s %s\n", v["field"], v["type"])
 	written, err := WriteBuffer(line, file)
