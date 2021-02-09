@@ -102,7 +102,7 @@ func ParseStructHeader(v datastructs.Estrutura, file *os.File) error {
 // ParseStructBodyArray Através do body da struct extraido pelo programa cria um go array
 func ParseStructBodyArray(v map[string]string, currentType string, file *os.File) error {
 	//currentType[6:] -> salta os chars na schema, esses são "lista "
-	line := fmt.Sprintf("%s []%s\n", v["field"], currentType[6:])
+	line := fmt.Sprintf("%s []%s `json:\"%s\"`\n", v["field"], currentType[6:], strings.ToLower(v["field"]))
 
 	written, err := WriteBuffer(line, file)
 	if err != nil || written < len(line) {
@@ -117,7 +117,7 @@ func ParseStructBodyMap(v map[string]string, file *os.File) error {
 	firstType := v["type"][:strings.Index(v["type"], " ")]
 	secondType := v["type"][strings.Index(v["type"], " ")+3:]
 
-	line := fmt.Sprintf("%s map[%s]%s\n", v["field"], firstType, secondType)
+	line := fmt.Sprintf("%s map[%s]%s `json:\"%s\"`\n", v["field"], firstType, secondType, strings.ToLower(v["field"]))
 
 	written, err := WriteBuffer(line, file)
 	if err != nil || written < len(line) {
@@ -129,7 +129,7 @@ func ParseStructBodyMap(v map[string]string, file *os.File) error {
 
 // ParseStructDefaultField Cria os campos das structs default, os que só são primitivos, ex:-> Nome string
 func ParseStructDefaultField(v map[string]string, file *os.File) error {
-	line := fmt.Sprintf("\t%s %s\n", v["field"], v["type"])
+	line := fmt.Sprintf("\t%s %s `json:\"%s\"`\n", v["field"], v["type"], strings.ToLower(v["field"]))
 	written, err := WriteBuffer(line, file)
 	if err != nil || written < len(line) {
 		fmt.Println("Error: ", err)
