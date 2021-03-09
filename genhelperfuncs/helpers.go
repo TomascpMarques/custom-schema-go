@@ -54,7 +54,7 @@ func MapearVetorEstruturas(fs *datastructs.FileStructs, linha string, counter *i
 }
 
 // SetUpFilesAndDirs Cria a dir e o ficheiro onde a schema traduzida para go estará
-func SetUpFilesAndDirs() (*os.File, error) {
+func SetUpFilesAndDirs() (files []*os.File, err error) {
 	// Cria a dir onde o ficheiro final estará
 	// Permissões: Owner: rwx; Others: r-x
 	dirErr := os.MkdirAll("./resolvedschema", 0755)
@@ -63,12 +63,49 @@ func SetUpFilesAndDirs() (*os.File, error) {
 		return nil, dirErr
 	}
 	// Cria o ficheiro com as structs
-	file, err := os.Create("resolvedschema/schema_structs.go")
+	fileStructs, err := os.Create("resolvedschema/schema_structs.go")
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
-	return file, nil
+	files = append(files, fileStructs)
+
+	// Cria o ficheiro com as structs
+	fileFuncs, err := os.Create("resolvedschema/schema_gen_funcs.go")
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	files = append(files, fileFuncs)
+
+	return files, nil
+}
+
+// WritePackageNameOnFiles Escre o nome do package em todos os ficheiros dentro do vetor files
+func WritePackageNameOnFiles(files []*os.File) {
+	nomePacote := "package resolvedschema\n"
+	for _, file := range files {
+		// Inssere o nome do package no ficheiro
+		written, err := file.WriteString(nomePacote)
+
+		if err != nil || written != len(nomePacote) {
+			fmt.Println("Wrriten - ERROR")
+			fmt.Println("ERROR: ", err)
+			panic("Fo impossivel atribuir um pacote aos novos ficheiros")
+		}
+
+		if file.Name() == "resolvedschema/schema_gen_funcs.go" {
+			written, err := file.WriteString("\nimport(\"encoding/json\")\n")
+
+			if err != nil || written != len("\nimport(\"encoding/json\")\n") {
+				fmt.Println("Wrriten - ERROR")
+				fmt.Println("ERROR: ", err)
+				panic(err)
+			}
+		}
+
+		fmt.Println("Wrriten - OK")
+	}
 }
 
 // WriteBuffer Escreve no ficheiro defenido, o string passada, a string passada é esperada que seja já formatada
@@ -87,6 +124,11 @@ func WriteBuffer(writeValue string, file *os.File) (int, error) {
 
 // ParseStructHeader Cria o header em Go de uma Estrutura passada nos parametros
 func ParseStructHeader(v datastructs.Estrutura, file *os.File) error {
+	// Se a lenght do nome for menor ou igual a 3, capitaliza as letras, de acordo com os estilo da
+	if len(v.StructHeader["body"]) <= 3 {
+		v.StructHeader["body"] = strings.ToUpper(v.StructHeader["body"])
+	}
+
 	// Header em Go da struct, conteúdo extraído do parametro v
 	line := fmt.Sprintf("// %s - \ntype %s struct {\n", v.StructHeader["body"], v.StructHeader["body"])
 
@@ -96,6 +138,52 @@ func ParseStructHeader(v datastructs.Estrutura, file *os.File) error {
 		fmt.Println("Error: ", err)
 		return err
 	}
+	return nil
+}
+
+/*
+	// FromMapToStruct -
+	func FromMapToStruct(param1 *map[string]interface{}) interface{} {
+		var exampStruct Examplestruct
+		temp, _ := json.Marshal(param1)
+		_ = json.Unmarshal(temp, &exampStruct)
+
+		return exampStruct
+	}
+*/
+
+// GenerateConvertFunc Cria a função que converte de um map[string]interface{} para a struct adequada
+func GenerateConvertFunc(v datastructs.Estrutura, file *os.File) error {
+	funcDef := fmt.Sprintf(
+		"\nfunc %sParaStruct(param1 *map[string]interface{}) %s {\n",
+		v.StructHeader["body"], v.StructHeader["body"])
+
+	// Escreve no ficheiro a defenição da struct
+	written, err := WriteBuffer(funcDef, file)
+	if err != nil || written < len(funcDef) {
+		fmt.Println("Erro na defenição da : ", err)
+		return err
+	}
+
+	funcBody := []string{
+		"\tvar returnStruct " + v.StructHeader["body"] + "\n",
+		"\ttemp, err := json.Marshal(param1)\n",
+		"\tif err != nil {\n\t\treturn ", v.StructHeader["body"], "{} \n\t}\n",
+		"\terr = json.Unmarshal(temp, &returnStruct)\n",
+		"\tif err != nil {\n\t\treturn ", v.StructHeader["body"], "{}\n\t}\n",
+		"\treturn returnStruct\n",
+		"}",
+	}
+
+	for _, value := range funcBody {
+		// Escreve no ficheiro a linha respetiva do corpo da função
+		written, err := WriteBuffer(value, file)
+		if err != nil || written < len(value) {
+			fmt.Println("Erro na defenição da : ", err)
+			return err
+		}
+	}
+
 	return nil
 }
 

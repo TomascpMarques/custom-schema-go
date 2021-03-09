@@ -53,24 +53,29 @@ func main() {
 
 	// Configura e cria a directoria onde a schema traduzida para go, vai estar
 	// Devolve o ficheiro criado
-	ficheiroGO, err := genhelperfuncs.SetUpFilesAndDirs()
+	ficheirosGO, err := genhelperfuncs.SetUpFilesAndDirs()
 	if err != nil {
 		fmt.Println("Erro: ", err)
 	}
-	defer ficheiroGO.Close()
+	defer ficheirosGO[0].Close()
+	defer ficheirosGO[1].Close()
 
-	// Inssere o nome do package do ficheiro
-	written, err := ficheiroGO.WriteString("package resolvedschema\n")
-	if err == nil && written == len("package resolvedschema\n") {
-		fmt.Println("Wrriten - OK")
-	}
+	genhelperfuncs.WritePackageNameOnFiles(ficheirosGO)
+
+	ficheiroStructs := ficheirosGO[0]
+	ficheiroFuncs := ficheirosGO[1]
 
 	// Itera por todos os items insseridos em lista
 	for _, v := range lista {
 		// Verifica se o header deste item está correto
 		if v.StructHeader["head"] == "tipo" {
 			// Traduz o conteudo dentro do elemento da lista, para valores e elementos Go
-			err := genhelperfuncs.ParseStructHeader(v, ficheiroGO)
+			err := genhelperfuncs.ParseStructHeader(v, ficheiroStructs)
+			if err != nil {
+				fmt.Println("Error: ", err)
+				return
+			}
+			err = genhelperfuncs.GenerateConvertFunc(v, ficheiroFuncs)
 			if err != nil {
 				fmt.Println("Error: ", err)
 				return
@@ -86,7 +91,7 @@ func main() {
 			currentType := v["type"]
 			// Verifica o tipo de campo corrente e parsa para o equivalente em Go
 			if len(regexp.MustCompile(`^lista\s+\w+$`).FindAllString(currentType, -1)) != 0 {
-				err := genhelperfuncs.ParseStructBodyArray(v, currentType, ficheiroGO)
+				err := genhelperfuncs.ParseStructBodyArray(v, currentType, ficheiroStructs)
 				if err != nil {
 					fmt.Println("Error: ", err)
 					return
@@ -95,7 +100,7 @@ func main() {
 			}
 			// Verifica o tipo de campo corrente e parsa para o equivalente em Go
 			if len(regexp.MustCompile(`^[A-z]+\s>\s[A-z]+$`).FindAllString(currentType, -1)) != 0 {
-				err := genhelperfuncs.ParseStructBodyMap(v, ficheiroGO)
+				err := genhelperfuncs.ParseStructBodyMap(v, ficheiroStructs)
 				if err != nil {
 					fmt.Println("Error: ", err)
 					return
@@ -103,14 +108,14 @@ func main() {
 				continue
 			}
 			// Verifica o tipo de campo corrente e parsa para o equivalente em Go
-			err := genhelperfuncs.ParseStructDefaultField(v, ficheiroGO)
+			err := genhelperfuncs.ParseStructDefaultField(v, ficheiroStructs)
 			if err != nil {
 				fmt.Println("Error: ", err)
 				return
 			}
 		}
 		// Encerra a struct com '}\n' para se poder passar á próxima
-		written, err := genhelperfuncs.WriteBuffer("}\n", ficheiroGO)
+		written, err := genhelperfuncs.WriteBuffer("}\n", ficheiroStructs)
 		if err == nil && written > 0 {
 			fmt.Println("Wrriten - OK")
 		} else {
