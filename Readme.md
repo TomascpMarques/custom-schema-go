@@ -7,6 +7,9 @@ Através de um ficheiro schema fornecido ao executável como paramêtro, o progr
 ## Install:
 ``` go get github.com/tomascpmarques/custom-schema-go ```
 
+## Execução:
+``` go run github.com/tomascpmarques/custom-schema-go/init.go ~caminho do ficheiro~  ```
+
 ## Exemplo:
 ### Ficheiro: /Example_Schemas/schema.txt
 ```
