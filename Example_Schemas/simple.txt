@@ -1,5 +1,5 @@
-tipo Ram
+tipo Utilizador
     Nome string
-    Velocidade string
-    Memoria string
-    Tipo string
+    Status string
+    Contribuicoes string > string
+    Expecialidade lista string
