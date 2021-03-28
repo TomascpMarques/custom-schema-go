@@ -4,6 +4,8 @@
 
 Através de um ficheiro schema fornecido ao executável como paramêtro, o programa lê e cria a schema desse ficheiro, em Golang structs equivalentes, que podem ser importadas por outros ficheiros.
 
+> De momento só funciona na pasta do projeto e em contentores docker que clonem o projeto, de resto, se chamar o .exe, o output sai todo comido.
+
 ## Install:
 ``` go get github.com/tomascpmarques/custom-schema-go ```
 
